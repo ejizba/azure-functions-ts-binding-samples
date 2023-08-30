@@ -1,24 +1,24 @@
-import { app, InvocationContext, output, Timer } from '@azure/functions';
+import { app, EventGridPartialEvent, InvocationContext, output, Timer } from '@azure/functions';
 
-const eventGridOutput = output.eventGrid({
-    topicEndpointUri: 'MyEventGridTopicUriSetting',
-    topicKeySetting: 'MyEventGridTopicKeySetting',
-});
-
-export async function timerTrigger1(myTimer: Timer, context: InvocationContext): Promise<void> {
+export async function timerTrigger1(myTimer: Timer, context: InvocationContext): Promise<EventGridPartialEvent> {
     const timeStamp = new Date().toISOString();
-    context.extraOutputs.set(eventGridOutput, {
+    return {
         id: 'message-id',
         subject: 'subject-name',
         dataVersion: '1.0',
         eventType: 'event-type',
-        data: 'event-data',
+        data: {
+            name: 'John Henry',
+        },
         eventTime: timeStamp,
-    });
+    };
 }
 
 app.timer('timerTrigger1', {
     schedule: '0 */5 * * * *',
-    extraOutputs: [eventGridOutput],
+    return: output.eventGrid({
+        topicEndpointUri: 'MyEventGridTopicUriSetting',
+        topicKeySetting: 'MyEventGridTopicKeySetting',
+    }),
     handler: timerTrigger1,
 });
